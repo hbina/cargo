@@ -29,6 +29,7 @@ use crate::util::{self, internal, Config, FileLock};
 pub struct PackageOpts<'cfg> {
     pub config: &'cfg Config,
     pub list: bool,
+    pub check_standard_semver: bool,
     pub check_metadata: bool,
     pub allow_dirty: bool,
     pub verify: bool,
@@ -56,6 +57,10 @@ pub fn package(ws: &Workspace<'_>, opts: &PackageOpts<'_>) -> CargoResult<Option
 
     if opts.check_metadata {
         check_metadata(pkg, config)?;
+    }
+
+    if opts.check_standard_semver {
+        check_standard_semver(pkg, config)?;
     }
 
     verify_dependencies(pkg)?;
@@ -199,6 +204,27 @@ fn check_metadata(pkg: &Package, config: &Config) -> CargoResult<()> {
              See https://doc.rust-lang.org/cargo/reference/manifest.html#package-metadata for more info.",
             things = things
         ))?
+    }
+    Ok(())
+}
+
+fn check_standard_semver(pkg: &Package, config: &Config) -> CargoResult<()> {
+    for dep in pkg.dependencies() {
+        let verr = semver::Version {
+            major: 1,
+            minor: 1,
+            patch: 1,
+            pre: vec![],
+            build: vec![],
+        };
+        if !dep.version_req().matches(&verr) {
+            let msg = format! {
+                 "all dependencies should have a semver-open version manifest.\n\
+                 dependency `{}`'s version manifest is non-semver-open.",
+                 dep.name_in_toml()
+            };
+            config.shell().warn(&msg)?
+        }
     }
     Ok(())
 }

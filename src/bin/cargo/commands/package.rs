@@ -18,6 +18,10 @@ pub fn cli() -> App {
             "Don't verify the contents by building them",
         ))
         .arg(opt(
+            "non-standard-requirements",
+            "Ignore warnings about non-standard requirements",
+        ))
+        .arg(opt(
             "no-metadata",
             "Ignore warnings about a lack of human-usable metadata",
         ))
@@ -40,6 +44,7 @@ pub fn exec(config: &mut Config, args: &ArgMatches<'_>) -> CliResult {
             config,
             verify: !args.is_present("no-verify"),
             list: args.is_present("list"),
+            check_standard_semver: !args.is_present("non-standard-requirements"),
             check_metadata: !args.is_present("no-metadata"),
             allow_dirty: args.is_present("allow-dirty"),
             target: args.target(),
