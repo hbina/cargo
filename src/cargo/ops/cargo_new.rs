@@ -53,7 +53,7 @@ impl fmt::Display for NewProjectKind {
             NewProjectKind::Bin => "binary (application)",
             NewProjectKind::Lib => "library",
         }
-        .fmt(f)
+            .fmt(f)
     }
 }
 
@@ -641,7 +641,7 @@ edition = {}
             },
             cargotoml_path_specifier
         )
-        .as_bytes(),
+            .as_bytes(),
     )?;
 
     // Create all specified source files (with respective parent directories) if they don't exist.
@@ -698,9 +698,23 @@ fn get_environment_variable(variables: &[&str]) -> Option<String> {
 fn discover_author() -> CargoResult<(String, Option<String>)> {
     let cwd = env::current_dir()?;
     let git_config = if let Ok(repo) = GitRepository::discover(&cwd) {
-        repo.config()
-            .ok()
-            .or_else(|| GitConfig::open_default().ok())
+        let repo_path = repo.path();
+        println!("repo_path:{:#?}", repo_path);
+        let cargo_test_root = env::var("__CARGO_TEST_ROOT");
+        match cargo_test_root {
+            Ok(ok) => {
+                if repo.path().starts_with(ok) {
+                    GitConfig::open_default().ok()
+                } else {
+                    repo.config()
+                        .ok()
+                        .or_else(|| GitConfig::open_default().ok())
+                }
+            }
+            Err(_) => repo.config()
+                .ok()
+                .or_else(|| GitConfig::open_default().ok())
+        }
     } else {
         GitConfig::open_default().ok()
     };
