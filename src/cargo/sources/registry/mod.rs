@@ -178,6 +178,7 @@ use crate::sources::PathSource;
 use crate::util::errors::CargoResultExt;
 use crate::util::hex;
 use crate::util::into_url::IntoUrl;
+use crate::util::restricted_names;
 use crate::util::{CargoResult, Config, Filesystem};
 
 const PACKAGE_SOURCE_LOCK: &str = ".cargo-ok";
@@ -494,6 +495,24 @@ impl<'cfg> RegistrySource<'cfg> {
                     entry_path,
                     prefix
                 )
+            }
+
+            if let Some(name) = entry_path.file_name() {
+                if restricted_names::is_windows_reserved(name.to_str().unwrap()) {
+                    if cfg!(windows) {
+                        anyhow::bail!(
+                            "cannot use name `{}`, it is a reserved Windows filename{}",
+                            name.to_str().unwrap(),
+                            "some help"
+                        );
+                    } else {
+                        println!(
+                            "the name `{}` is a reserved Windows filename\n\
+                        This package will not work on Windows platforms.",
+                            name.to_str().unwrap()
+                        );
+                    }
+                }
             }
 
             // Once that's verified, unpack the entry as usual.
