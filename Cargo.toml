@@ -19,54 +19,54 @@ name = "cargo"
 path = "src/cargo/lib.rs"
 
 [dependencies]
-atty = "0.2"
-bytesize = "1.0"
+atty = "0.2.14"
+bytesize = "1.0.1"
 cargo-platform = { path = "crates/cargo-platform", version = "0.1.1" }
 crates-io = { path = "crates/crates-io", version = "0.31.1" }
-crossbeam-utils = "0.7"
-crypto-hash = "0.3.1"
-curl = { version = "0.4.23", features = ["http2"] }
-curl-sys = "0.4.22"
-env_logger = "0.7.0"
-pretty_env_logger = { version = "0.4", optional = true }
-anyhow = "1.0"
-filetime = "0.2.9"
-flate2 = { version = "1.0.3", default-features = false, features = ["zlib"] }
-git2 = "0.13.5"
+crossbeam-utils = "0.7.2"
+crypto-hash = "0.3.4"
+curl = { version = "0.4.31", features = ["http2"] }
+curl-sys = "0.4.34"
+env_logger = "0.7.1"
+pretty_env_logger = { version = "0.4.0", optional = true }
+anyhow = "1.0.32"
+filetime = "0.2.12"
+flate2 = { version = "1.0.16", default-features = false, features = ["zlib"] }
+git2 = "0.13.8"
 git2-curl = "0.14.0"
 glob = "0.3.0"
-hex = "0.4"
-home = "0.5"
-humantime = "2.0.0"
-ignore = "0.4.7"
-lazy_static = "1.2.0"
+hex = "0.4.2"
+home = "0.5.3"
+humantime = "2.0.1"
+ignore = "0.4.16"
+lazy_static = "1.4.0"
 jobserver = "0.1.21"
-lazycell = "1.2.0"
-libc = "0.2"
-log = "0.4.6"
-libgit2-sys = "0.12.7"
-memchr = "2.1.3"
-num_cpus = "1.0"
-opener = "0.4"
-percent-encoding = "2.0"
-rustfix = "0.5.0"
-same-file = "1"
-semver = { version = "0.10", features = ["serde"] }
-serde = { version = "1.0.82", features = ["derive"] }
-serde_ignored = "0.1.0"
-serde_json = { version = "1.0.30", features = ["raw_value"] }
-shell-escape = "0.1.4"
+lazycell = "1.2.1"
+libc = "0.2.74"
+log = "0.4.11"
+libgit2-sys = "0.12.9"
+memchr = "2.3.3"
+num_cpus = "1.13.0"
+opener = "0.4.1"
+percent-encoding = "2.1.0"
+rustfix = "0.5.1"
+same-file = "1.0.6"
+semver = { version = "0.10.0", features = ["serde"] }
+serde = { version = "1.0.115", features = ["derive"] }
+serde_ignored = "0.1.2"
+serde_json = { version = "1.0.57", features = ["raw_value"] }
+shell-escape = "0.1.5"
 strip-ansi-escapes = "0.1.0"
-tar = { version = "0.4.26", default-features = false }
-tempfile = "3.0"
-termcolor = "1.1"
-toml = "0.5.3"
-unicode-xid = "0.2.0"
-url = "2.0"
-walkdir = "2.2"
-clap = "2.31.2"
-unicode-width = "0.1.5"
-openssl = { version = '0.10.11', optional = true }
+tar = { version = "0.4.29", default-features = false }
+tempfile = "3.1.0"
+termcolor = "1.1.0"
+toml = "0.5.6"
+unicode-xid = "0.2.1"
+url = "2.1.1"
+walkdir = "2.3.1"
+clap = "2.33.2"
+unicode-width = "0.1.8"
+openssl = { version = "0.10.30", optional = true }
 im-rc = "15.0.0"
 
 # A noop dependency that changes in the Rust repository, it's a bit of a hack.
@@ -78,11 +78,11 @@ rustc-workspace-hack = "1.0.0"
 core-foundation = { version = "0.9.0", features = ["mac_os_10_7_support"] }
 
 [target.'cfg(windows)'.dependencies]
-miow = "0.3.1"
+miow = "0.3.5"
 fwdansi = "1.1.0"
 
 [target.'cfg(windows)'.dependencies.winapi]
-version = "0.3"
+version = "0.3.9"
 features = [
   "basetsd",
   "handleapi",
@@ -107,8 +107,8 @@ cargo-test-macro = { path = "crates/cargo-test-macro", version = "0.1.0" }
 cargo-test-support = { path = "crates/cargo-test-support", version = "0.1.0" }
 
 [build-dependencies]
-flate2 = { version = "1.0.3", default-features = false, features = ["zlib"] }
-tar = { version = "0.4.26", default-features = false }
+flate2 = { version = "1.0.16", default-features = false, features = ["zlib"] }
+tar = { version = "0.4.29", default-features = false }
 
 [[bin]]
 name = "cargo"
