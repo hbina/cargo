@@ -21,6 +21,7 @@ use crate::util::paths;
 use crate::util::toml::TomlManifest;
 use crate::util::{self, restricted_names, Config, FileLock};
 use crate::{drop_println, ops};
+use git2::Repository;
 
 pub struct PackageOpts<'cfg> {
     pub config: &'cfg Config,
@@ -398,8 +399,35 @@ fn check_repo_state(
     ) -> CargoResult<Option<String>> {
         let workdir = repo.workdir().unwrap();
 
-        let mut sub_repos = Vec::new();
-        open_submodules(repo, &mut sub_repos)?;
+        println!("package:{:?}", p);
+
+        let include = p.manifest().include();
+        println!("include:{:?}", include);
+
+        let exclude = p.manifest().exclude();
+        println!("exclude:{:?}", exclude);
+
+        let all_repos = open_submodules(repo)?;
+
+        let bad_repos = all_repos
+            .iter()
+            .filter_map(|x| match x {
+                SubmoduleOpenResult::SUCCESS(_) => None,
+                SubmoduleOpenResult::FAILURE(pathbuf) => Some(pathbuf),
+            })
+            .inspect(|bad_repo| {
+                println!("bad_repo:{:?}", bad_repo);
+            })
+            .collect::<Vec<&PathBuf>>();
+
+        let mut sub_repos = all_repos
+            .iter()
+            .filter_map(|x| match x {
+                SubmoduleOpenResult::SUCCESS(x) => Some(x),
+                SubmoduleOpenResult::FAILURE(_) => None,
+            })
+            .collect::<Vec<&(PathBuf, Repository)>>();
+
         // Sort so that longest paths are first, to check nested submodules first.
         sub_repos.sort_unstable_by(|a, b| b.0.as_os_str().len().cmp(&a.0.as_os_str().len()));
         let submodule_dirty = |path: &Path| -> bool {
@@ -414,6 +442,22 @@ fn check_repo_state(
                         .unwrap_or(false)
                 })
         };
+
+        let src_files_inside_bad_repos = src_files
+            .iter()
+            .inspect(|src_file| {
+                println!("src_file:{:?}", src_file);
+            })
+            .filter(|src_file| {
+                bad_repos
+                    .iter()
+                    .any(|bad_repo_path| src_file.starts_with(bad_repo_path))
+            })
+            .collect::<Vec<&PathBuf>>();
+        println!(
+            "src_files_inside_bad_repos:{:#?}",
+            src_files_inside_bad_repos
+        );
 
         let dirty = src_files
             .iter()
@@ -455,20 +499,39 @@ fn check_repo_state(
         }
     }
 
+    pub enum SubmoduleOpenResult {
+        SUCCESS((PathBuf, git2::Repository)),
+        FAILURE(PathBuf),
+    }
+
     /// Helper to recursively open all submodules.
-    fn open_submodules(
-        repo: &git2::Repository,
-        sub_repos: &mut Vec<(PathBuf, git2::Repository)>,
-    ) -> CargoResult<()> {
-        for submodule in repo.submodules()? {
-            // Ignore submodules that don't open, they are probably not initialized.
-            // If its files are required, then the verification step should fail.
-            if let Ok(sub_repo) = submodule.open() {
-                open_submodules(&sub_repo, sub_repos)?;
-                sub_repos.push((sub_repo.workdir().unwrap().to_owned(), sub_repo));
+    fn open_submodules(repo: &git2::Repository) -> CargoResult<Vec<SubmoduleOpenResult>> {
+        // So the interface for this function is a lot cleaner.
+        fn recursively_open(
+            repo: &git2::Repository,
+            sub_repos: &mut Vec<SubmoduleOpenResult>,
+        ) -> CargoResult<()> {
+            for submodule in repo.submodules()? {
+                // Ignore submodules that don't open, they are probably not initialized.
+                // If its files are required, then the verification step should fail.
+                if let Ok(sub_repo) = submodule.open() {
+                    recursively_open(&sub_repo, sub_repos)?;
+                    sub_repos.push(SubmoduleOpenResult::SUCCESS((
+                        sub_repo.workdir().unwrap().to_owned(),
+                        sub_repo,
+                    )));
+                } else {
+                    sub_repos.push(SubmoduleOpenResult::FAILURE(PathBuf::from(
+                        submodule.path(),
+                    )));
+                }
             }
+            Ok(())
         }
-        Ok(())
+
+        let mut result = Vec::new();
+        recursively_open(repo, &mut result)?;
+        Ok(result)
     }
 }
 
